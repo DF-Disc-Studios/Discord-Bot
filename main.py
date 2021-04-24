@@ -5,9 +5,10 @@ import os
 import time
 import datetime
 import psutil
+import asyncio
 
 #Config
-prefix = "s!"
+prefix = "?"
 token = os.environ["DISCORD_TOKEN"]
 client = commands.Bot(
   command_prefix=prefix, 
@@ -27,9 +28,17 @@ commands = {
   "calc" : {
     "name" : "calc",
     "description" : "Calculate a mathmatical expression.",
-    "perms" : 4,
+    "perms" : 7,
     "usage" : "[Expression]",
     "permName" : "Owner"
+  },
+
+  "botstats" : {
+    "name" : "botstats",
+    "description" : "View the statistics for the bot.",
+    "perms" : 0,
+    "usage" : "",
+    "permName" : "User"
   },
 
   "botstats" : {
@@ -59,68 +68,42 @@ async def permsCalc(ctx):
     role = role.id
 
     if role == 781542046778785862:
-      permInt = 4
+      permInt = 7
       perm = "OWNER"
       return()
 
     if role == 786292786088902676:
-      permInt = 3
+      permInt = 6
       perm = "ADMIN"
       return()
 
     if role == 789481171683115038:
-      permInt = 2
+      permInt = 5
       perm = "DEVELOPER"
       return()
 
-    if role == 834432135350845471:
+    if role == 815939052817612832:
+      permInt = 4
+      perm = "BUILDER"
+      return()
+  
+    if role == 786292735241486377:
+      permInt = 3
+      perm = "MODERATOR"
+      return()
+
+    if role == 785407257419841538:
+      permInt = 2
+      perm = "TESTER"
+      return()
+
+    if role == 818901245095182337:
       permInt = 1
-      perm = "SUGGESTION MODERATOR"
+      perm = "RETIRED STAFF"
       return()
 
   permInt = 0
   perm = "USER"
-
-@client.event
-async def on_message(ctx):
-  if ctx.content.startswith(prefix) == True:
-    command = ctx.content.split()
-    command = command[0]
-    command = command.replace(prefix, "")
-    if command in commands:
-      await permsCalc(ctx)
-      command = commands[command]
-
-      if permInt < command["perms"]:
-        embed = discord.Embed(
-          timestamp=(datetime.datetime.now()), 
-          color=0xff0000
-        )
-        embed.add_field(
-          name="No Permission!", 
-          value=f"Sorry, you do not have permission to use this command. Commands that you are able to use are listed in {prefix}help."
-        )
-        perm = command["permName"]
-        embed.set_footer(
-          text=f"Required Permission: {perm}"
-        )
-        await ctx.channel.send(embed=embed)
-        return
-
-      await client.process_commands(ctx)
-      return 
-
-    else:
-      embed = discord.Embed(
-        timestamp=(datetime.datetime.now()), 
-        color=0xff0000
-      )
-      embed.add_field(name="Error:", value=f"This command was not found, commands are listed in {prefix}help")
-      await ctx.channel.send(embed=embed)
-      return 
-
-  if 835165724452192307 in ctx.raw_mentions:
-    await ctx.channel.send(f"{ctx.author.mention}, My prefix is: {prefix}")
 
 @client.command(no_pm=True, name="calc")
 async def calc_(ctx, *, args="0*0"):
@@ -139,10 +122,9 @@ async def botstats_(ctx):
 
   embed.add_field(name="• Ram Usage", value=f"{psutil.virtual_memory().percent}%", inline=False)
   embed.add_field(name="• CPU Usage", value=f"{psutil.cpu_percent()}%", inline=False)
-  embed.add_field(name="• Users", value={ctx.guild.member_count})
-  embed.add_field(name="• Channels", value={len(ctx.guild.channels)}, inline=False)
+  embed.add_field(name="• Users", value=ctx.guild.member_count)
+  embed.add_field(name="• Channels", value=len(ctx.guild.channels), inline=False)
   embed.add_field(name="• API Latency", value=f"{ping}ms", inline=False)
-  embed.set_footer(text=f"Requested by {ctx.author}")
   await ctx.send(embed=embed)
 
 @client.command(no_pm=True, name="help")
@@ -258,6 +240,72 @@ async def on_member_remove(member):
 
   channel = client.get_channel(815913578666131486)
   await channel.send(embed=embed)
+
+@client.event
+async def on_raw_reaction_add(payload):
+  if payload.channel_id == 815894685679616000:
+    guild = client.get_guild(payload.guild_id)
+    channel = guild.get_channel(payload.channel_id)
+    msg = await channel.fetch_message(payload.message_id)
+
+    user = client.get_user(payload.user_id)
+    if payload.user_id == msg.author.id:
+      await msg.remove_reaction(payload.emoji, user)
+
+@client.event
+async def on_message(ctx):
+  if ctx.content.startswith(prefix) == True:
+    command = ctx.content.split()
+    command = command[0]
+    command = command.replace(prefix, "")
+    if command in commands:
+      await permsCalc(ctx)
+      command = commands[command]
+
+      if permInt < command["perms"]:
+        embed = discord.Embed(
+          timestamp=(datetime.datetime.now()), 
+          color=0xff0000
+        )
+        embed.add_field(
+          name="No Permission!", 
+          value=f"Sorry, you do not have permission to use this command. Commands that you are able to use are listed in {prefix}help."
+        )
+        perm = command["permName"]
+        embed.set_footer(
+          text=f"Required Permission: {perm}"
+        )
+        await ctx.channel.send(embed=embed)
+        return
+
+      await client.process_commands(ctx)
+      return 
+
+    else:
+      embed = discord.Embed(
+        timestamp=(datetime.datetime.now()), 
+        color=0xff0000
+      )
+      embed.add_field(name="Error:", value=f"This command was not found, commands are listed in {prefix}help")
+      await ctx.channel.send(embed=embed)
+      return 
+
+  if ctx.channel.id == 815894685679616000:
+    if ctx.attachments != []:
+      await ctx.add_reaction("<:upvote:809849047506616411>")
+      await ctx.add_reaction("<:downvote:809849047321280544>")
+
+    else:
+      await asyncio.sleep(1800)
+      try:
+        await ctx.delete()
+
+      except:
+        return
+      
+
+  if 835165724452192307 in ctx.raw_mentions:
+    await ctx.channel.send(f"{ctx.author.mention}, My prefix is: {prefix}")
 
 #Run Bot
 client.run(token)
