@@ -42,6 +42,14 @@ commands = {
     "permName" : "Owner"
   },
 
+  "plot" : {
+    "name" : "plot",
+    "description" : "View statistics and info for a Disc Studios plot.",
+    "perms" : 0,
+    "usage" : "[Plotname]",
+    "permName" : "User"
+  },
+
   "botstats" : {
     "name" : "botstats",
     "description" : "View the statistics for the bot.",
@@ -113,6 +121,29 @@ async def permsCalc(ctx):
 
   permInt = 0
   perm = "USER"
+
+@client.command(no_pm=True, name="plot")
+async def plot_(ctx, *, args="Menu"):
+  menu = {
+    "TL" : {
+      "name" : "The Laberatories",
+      "id" : "0",
+      "description" : "none"
+    },
+
+    "CBP" : {
+      "name" : "Creative Build Plots",
+      "id" : "0",
+      "description" : "none"
+    }
+  }
+  if args == "Menu":
+    embed = discord.Embed(
+      timestamp=(datetime.datetime.now()), 
+      color=0xfff9b3
+    )
+    await ctx.send(embed=embed)
+
 
 @client.command(no_pm=True, name="calc")
 async def calc_(ctx, *, args="0*0"):
