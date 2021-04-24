@@ -4,6 +4,7 @@ import discord
 import os
 import time
 import datetime
+import psutil
 
 #Config
 prefix = "s!"
@@ -119,6 +120,20 @@ async def calc_(ctx, *, args="0*0"):
   embed = discord.Embed(timestamp=(datetime.datetime.now()), color=0xfff9b3)
   embed.add_field(name="📥 Input", value=f"```{args}```", inline=False)
   embed.add_field(name="📤 Output", value=f"```{x}```", inline=False)
+  embed.set_footer(text=f"Requested by {ctx.author}")
+  await ctx.send(embed=embed)
+
+@client.command(no_pm=True, name="botstats")
+async def botstats_(ctx):
+  embed = discord.Embed(timestamp=(datetime.datetime.now()), color=0xfff9b3, description="**📊 Disc Studios Bot - Statistics**")
+
+  ping = round(((client.latency) * 1000), 1)
+
+  embed.add_field(name="• Ram Usage", value=f"{psutil.virtual_memory().percent}%", inline=False)
+  embed.add_field(name="• CPU Usage", value=f"{psutil.cpu_percent()}%", inline=False)
+  embed.add_field(name="• Users", value={ctx.guild.member_count})
+  embed.add_field(name="• Channels", value={len(ctx.guild.channels)}, inline=False)
+  embed.add_field(name="• API Latency", value=f"{ping}ms", inline=False)
   embed.set_footer(text=f"Requested by {ctx.author}")
   await ctx.send(embed=embed)
 
