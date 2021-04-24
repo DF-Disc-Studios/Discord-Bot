@@ -1,4 +1,5 @@
 from discord.ext import commands
+import dns.query
 import weblinks
 import discord
 import os
@@ -6,6 +7,9 @@ import time
 import datetime
 import psutil
 import asyncio
+import pymongo
+import json
+
 
 #Config
 prefix = "?"
@@ -15,6 +19,11 @@ client = commands.Bot(
   intents=discord.Intents.all()
 )
 client.remove_command("help")
+
+username = os.environ["DB_USERNAME"]
+password = os.environ["DB_PASSWORD"]
+database = f"mongodb+srv://{username}:{password}@cluster0.buvu1.mongodb.net/database?retryWrites=true&w=majority"
+database = pymongo.MongoClient(database)
 
 commands = {
   "help" : {
@@ -203,6 +212,147 @@ async def help_(ctx, *, args="Menu"):
       embed.add_field(name="Error:", value=f"This command was not found, commands are listed in {prefix}help")
       await ctx.send(embed=embed)
 
+@client.command(no_pm=True, name="stats")
+async def stats_(ctx, args="0"):
+  if args == "0":
+    args = str(ctx.author.id)
+  
+  try:
+    data = database.discStudiosBot.suggestionData.find_one({"_id":f"{args}"})
+    data = data["data"]
+    suggestionsList = data
+
+  except:
+    embed = discord.Embed(
+      timestamp=(datetime.datetime.now()), 
+      color=0xff0000
+    )
+    embed.add_field(name="Error:", value=f"This user was not found.")
+    await ctx.send(embed=embed)
+    return
+
+  suggestions = 0
+  messages = []
+  for suggestion in data:
+    try:
+      channel = ctx.guild.get_channel(830867541601419264)
+      message = await channel.fetch_message(suggestion)
+    except:
+      try:
+        channel = ctx.guild.get_channel(834466482464227378)
+        message = await channel.fetch_message(suggestion)
+      except:
+        suggestionsList.remove(suggestion)
+    
+    try:
+      suggestions += 1
+      messages.append(message)
+
+    except:
+      message = "0"
+
+  denied = 0
+  possible = 0
+  dupe = 0
+  confirmedbug = 0
+  accepted = 0
+  patched = 0
+  altimpl = 0
+  impossible = 0
+  notdiscstudios = 0
+  general = 0
+
+  totalReactions = []
+
+  for reactions in messages:
+    for react in reactions.reactions:
+      if f"<:{react.emoji.name}:{react.emoji.id}>" not in totalReactions:
+        totalReactions.append(f"<:{react.emoji.name}:{react.emoji.id}>")
+
+      if react.emoji.name == "denied":
+        denied += 1
+
+      if react.emoji.name == "possible":
+        possible += 1
+      
+      if react.emoji.name == "dupe":
+        dupe += 1
+
+      if react.emoji.name == "confirmedbug":
+        confirmedbug += 1
+
+      if react.emoji.name == "accepted":
+        accepted += 1
+
+      if react.emoji.name == "patched":
+        patched += 1
+
+      if react.emoji.name == "altimpl":
+        altimpl += 1
+
+      if react.emoji.name == "impossible":
+        impossible += 1
+
+      if react.emoji.name == "notdiscstudios":
+        notdiscstudios += 1
+
+      if react.emoji.name == "general":
+        general += 1
+
+  finalReactions = ["<:news:834457524886569010>"]
+  for reactionImage in totalReactions:
+    if reactionImage == "<:denied:809049370821394432>":
+      finalReactions.append(f"<:denied:809049370821394432> {denied}")
+
+    if reactionImage == "<:possible:809834594014724138>":
+      finalReactions.append(f"<:possible:809834594014724138> {possible}")
+
+    if reactionImage == "<:dupe:809049370912882729>":
+      finalReactions.append(f"<:dupe:809049370912882729> {dupe}")
+
+    if reactionImage == "<:confirmedbug:809834670543732748>":
+      finalReactions.append(f"<:confirmedbug:809834670543732748> {confirmedbug}")
+
+    if reactionImage == "<:accepted:809049370649427969>":
+      finalReactions.append(f"<:accepted:809049370649427969> {accepted}")
+
+    if reactionImage == "<:patched:820676613883691034>":
+      finalReactions.append(f"<:patched:820676613883691034> {patched}")
+
+    if reactionImage == "<:altimpl:809834670325628931>":
+      finalReactions.append(f"<:altimpl:809834670325628931> {altimpl}")
+
+    if reactionImage == "<:impossible:809834670590132234>":
+      finalReactions.append(f"<:impossible:809834670590132234> {impossible}")
+
+    if reactionImage == "<:notdiscstudios:809834965385871371>":
+      finalReactions.append(f"<:notdiscstudios:809834965385871371> {notdiscstudios}")
+
+    if reactionImage == "<:general:809049370912882730>":
+      finalReactions.append(f"<:general:809049370912882730> {general}")
+
+  finalReactions = "\n".join(finalReactions) 
+
+  database.discStudiosBot.suggestionData.delete_one({"_id":f"{args}"})
+  database.discStudiosBot.suggestionData.insert_one({"_id":f"{args}", "data":suggestionsList})
+
+  embed = discord.Embed(
+    timestamp=(datetime.datetime.now()), 
+    color=0xfff9b3,
+    title="Stats:"
+  )
+  embed.add_field(
+    name="Suggestion Stats",
+    value=f"Total Suggestions: {suggestions}\nTotal Upvotes: 0\nTotal Downvotes: 0"
+  )
+
+  embed.add_field(
+    name="Reactions Stats",
+    value=finalReactions
+  )
+
+  await ctx.send(embed=embed)
+
 @client.event
 async def on_member_join(member):
   embed = discord.Embed(
@@ -296,13 +446,29 @@ async def on_message(ctx):
       await ctx.add_reaction("<:downvote:809849047321280544>")
 
     else:
-      await asyncio.sleep(1800)
+      await asyncio.sleep(900)
       try:
         await ctx.delete()
 
       except:
         return
-      
+  
+  if ctx.channel.id in [830867541601419264, 834466482464227378]:
+    try:
+      data = database.discStudiosBot.suggestionData.find_one({"_id":f"{ctx.author.id}"})
+      database.discStudiosBot.suggestionData.delete_one({"_id":f"{ctx.author.id}"})
+      data = data["data"]
+
+    except:
+      data = []
+
+    
+    data.append(ctx.id)
+    if ctx.channel.id == 830867541601419264:
+      await ctx.add_reaction("<:upvote:809849047506616411>")
+      await ctx.add_reaction("<:downvote:809849047321280544>")
+
+    database.discStudiosBot.suggestionData.insert_one({"_id":f"{ctx.author.id}", "data":data})
 
   if 835165724452192307 in ctx.raw_mentions:
     await ctx.channel.send(f"{ctx.author.mention}, My prefix is: {prefix}")
