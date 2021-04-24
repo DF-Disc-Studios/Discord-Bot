@@ -32,6 +32,14 @@ commands = {
     "permName" : "Owner"
   },
 
+  "botstats" : {
+    "name" : "botstats",
+    "description" : "View the statistics for the bot.",
+    "perms" : 0,
+    "usage" : "",
+    "permName" : "User"
+  },
+
   "stats" : {
     "name" : "stats",
     "description" : "View suggestion stats of a user.",
