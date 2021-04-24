@@ -366,9 +366,11 @@ async def on_member_join(member):
   embed.set_footer(
     text=f"User ID: {member.id}"
   )
-  embed.set_image(
-    url=f"https://mc-heads.net/body/{member.name}"
-  )
+  time.sleep(1)
+  if member.nick != None:
+    embed.set_image(
+      url=f"https://mc-heads.net/body/{member.nick}"
+    )
 
   channel = client.get_channel(815913578666131486)
   await channel.send(embed=embed)
@@ -385,9 +387,10 @@ async def on_member_remove(member):
   embed.set_footer(
     text=f"User ID: {member.id}"
   )
-  embed.set_image(
-    url=f"https://mc-heads.net/body/{member.name}"
-  )
+  if member.nick != None:
+    embed.set_image(
+      url=f"https://mc-heads.net/body/{member.nick}"
+    )
 
   channel = client.get_channel(815913578666131486)
   await channel.send(embed=embed)
