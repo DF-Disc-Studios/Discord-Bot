@@ -1,4 +1,5 @@
 from discord.ext import commands
+from replit import db
 import dns.query
 import weblinks
 import discord
@@ -9,6 +10,7 @@ import psutil
 import asyncio
 import pymongo
 import json
+import sys
 
 
 #Config
@@ -44,9 +46,9 @@ commands = {
 
   "plot" : {
     "name" : "plot",
-    "description" : "View statistics and info for a Disc Studios plot.",
+    "description" : "View statisitics of a CBP plot.",
     "perms" : 0,
-    "usage" : "[Plotname]",
+    "usage" : "[PlotID]",
     "permName" : "User"
   },
 
@@ -58,12 +60,20 @@ commands = {
     "permName" : "User"
   },
 
-  "botstats" : {
-    "name" : "botstats",
-    "description" : "View the statistics for the bot.",
-    "perms" : 0,
+  "restart" : {
+    "name" : "restart",
+    "description" : "Restart the bot.",
+    "perms" : 5,
     "usage" : "",
-    "permName" : "User"
+    "permName" : "DEVELOPER"
+  },
+
+  "updateguidelines" : {
+    "name" : "updateguidelines",
+    "description" : "Update the guidelines in <#835886069517647903> channel.",
+    "perms" : 6,
+    "usage" : "",
+    "permName" : "ADMIN"
   },
 
   "stats" : {
@@ -123,31 +133,148 @@ async def permsCalc(ctx):
   perm = "USER"
 
 @client.command(no_pm=True, name="plot")
-async def plot_(ctx, *, args="Menu"):
-  menu = {
-    "TL" : {
-      "name" : "The Laberatories",
-      "id" : "0",
-      "description" : "none"
-    },
-
-    "CBP" : {
-      "name" : "Creative Build Plots",
-      "id" : "0",
-      "description" : "none"
-    }
-  }
-  if args == "Menu":
+async def plot_(ctx, args="0"):
+  data = database.discStudiosBot.plotData.find_one({"_id":args})
+  if data == None:
     embed = discord.Embed(
-      timestamp=(datetime.datetime.now()), 
-      color=0xfff9b3
+      color=0xff0000,
+      title="Error!",
+      description="Plot was not found."
+    )
+    await ctx.send(embed=embed)
+  else:
+    embed = discord.Embed(
+      title = f"Plot Infomation ({args})"
+    )
+    
+    name = data["name"]
+    owner = data["owner"]
+    node = data["node"]
+    size = "Basic"
+    tags = data["tags"]
+    autoClear = data["autoClear"]
+    lastActive = data["lastActive"]
+    whitelisted = data["whitelisted"]
+    playerCount = data["playerCount"]
+    currentVotes = data["currentVotes"]
+    barrelLoc = data["barrelLoc"]
+
+    icon = data["icon"]
+    icon = str(os.environ["ITEM_API"] + icon + ".png")
+    embed.add_field(
+      name = "Name",
+      value = name
+    )
+    embed.add_field(
+      name = "Owner",
+      value = owner
+    )
+    embed.add_field(
+      name = "Node",
+      value = node
+    )
+    embed.add_field(
+      name = "Plot Size",
+      value = size
+    )
+    embed.add_field(
+      name = "Plot Tags",
+      value = tags
+    )
+    embed.add_field(
+      name = "Auto Clear Date",
+      value = autoClear
+    )
+    embed.add_field(
+      name = "Last Active Date",
+      value = lastActive
+    )
+    embed.add_field(
+      name = "Whitelisted",
+      value = whitelisted
+    )
+    embed.add_field(
+      name = "Player Count",
+      value = playerCount
+    )
+    embed.add_field(
+      name = "Current Votes",
+      value = currentVotes
+    )
+    embed.add_field(
+      name = "Barrel Loc",
+      value = barrelLoc
+    )
+    
+    embed.set_thumbnail(
+      url = icon
     )
     await ctx.send(embed=embed)
 
+@client.command(no_pm=True, name="updateguidelines")
+async def updateguidelines_(ctx):
+  f = open("guidelines.txt", "r")
+  text = f.read()
+  text = text.split("***")
+  guild = client.get_guild(778299599697215528)
+  channel = guild.get_channel(835886069517647903)
+  index = 0
+  for message in text:
+    index += 1
+    if index == 2:
+      embed = discord.Embed(
+        color=0x2C2F33,
+        title="Creative Build Plots - Vote Event",
+        description="When using @vote on a plot it triggers this event."
+      )
+      embed.add_field(
+        name="Uses",
+        value="- Can give rewards for users voting on a plot.\n- It would make plots more interesting and enjoyable.",
+        inline=False
+      )
+      await channel.send(embed=embed, content="\n**Example Suggestion**")
+    elif index == 4:
+      embed = discord.Embed(
+        color=0x2C2F33,
+        title="Creative Build Plots - Player Action: Send Message does not work with numbers",
+        description="When using Send Message with numbers as arguments, it doesn't work."
+      )
+      embed.add_field(
+        name="Reproduction",
+        value="1. Place a player action: Send Message\n2. Put a number in the parameter chest\n3. Run the code",
+        inline=False
+      )
+      embed.add_field(
+        name="Expected Result",
+        value="The message is sent to the player as text.",
+        inline=False
+      )
+      embed.add_field(
+        name="Actual Result",
+        value="No message is sent.",
+        inline=False
+      )
+      await channel.send(embed=embed, content="\n**Example Issue**")
+    else:
+      await channel.send(message)
+
+  f.close()
+
+@client.command(no_pm=True, name="restart")
+async def restart_(ctx):
+  await ctx.send("Restarting the bot...")
+  db["restart"] = [ctx.channel.id]
+  db["restartTime"] = int(time.time())
+  python = sys.executable
+  os.execl(python, python, * sys.argv)
 
 @client.command(no_pm=True, name="calc")
 async def calc_(ctx, *, args="0*0"):
-  x = eval(args)
+  try:
+    x = eval(args)
+  except Exception as e:
+    x = f"An error occured: {e}"
+
   embed = discord.Embed(timestamp=(datetime.datetime.now()), color=0xfff9b3)
   embed.add_field(name="📥 Input", value=f"```{args}```", inline=False)
   embed.add_field(name="📤 Output", value=f"```{x}```", inline=False)
@@ -428,7 +555,7 @@ async def on_member_remove(member):
 
 @client.event
 async def on_raw_reaction_add(payload):
-  if payload.channel_id == 815894685679616000:
+  if payload.channel_id in [815894685679616000, 830867541601419264, 834466482464227378]:
     guild = client.get_guild(payload.guild_id)
     channel = guild.get_channel(payload.channel_id)
     msg = await channel.fetch_message(payload.message_id)
@@ -436,6 +563,25 @@ async def on_raw_reaction_add(payload):
     user = client.get_user(payload.user_id)
     if payload.user_id == msg.author.id:
       await msg.remove_reaction(payload.emoji, user)
+
+@client.event
+async def on_ready():
+  print(f"Logged in as: {client.user}")
+  try:
+    value = db["restart"]
+    restartTime = db["restartTime"]
+
+  except Exception as e:
+    print(e)
+    return
+
+  del db["restart"]
+  del db["restartTime"]
+  restartTime = int(time.time()) - restartTime
+
+  guild = client.get_guild(778299599697215528)
+  channel = guild.get_channel(value[0])
+  await channel.send(f"Restarted! ({restartTime}s)")
 
 @client.event
 async def on_message(ctx):

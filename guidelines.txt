@@ -1,0 +1,25 @@
+<:news:834457524886569010>  **Suggestion Guidelines**
+
+– Post one suggestion per message unless the suggestions are very closely related.
+– Make sure to explain your suggestion fully in your message. This includes bumps, so don't just link to the original post!
+– Do not post joke suggestions.
+– Check for duplicates.
+– Do not delete suggestions! A suggestion moderator will delete your post if necessary.**
+**
+***
+%EMBED1%
+***
+<:news:834457524886569010> **Issue Guidelines**
+
+– Format your issues like the given example below.
+– Send game-breaking or beta plot issues to https://discstudios.herokuapp.com/reportbug.
+– Check for duplicates.
+– Do not delete issues! A suggestion moderator will delete your post if necessary.**
+**
+***
+%EMBED2%
+***
+<:news:834457524886569010> **Bumping & Duplicates**
+In order to avoid losing suggestions and issues, they can be bumped. Posts may be bumped if it has been 2 weeks since their latest bump with no response from developers. Before bumping a post, you must search for duplicates with Discord's search feature (CTRL+F or ⌘+F). Once you've reached 7 duplicates, you will be muted temporarily. After 7, actions taken are chosen on a case by case basis.
+
+If you are unsure of whether your suggestion or issue is a duplicate, feel free to ask in <#832858384717578241>.
